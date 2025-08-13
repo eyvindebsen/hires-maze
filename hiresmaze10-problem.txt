@@ -1,0 +1,89 @@
+Hires Maze v10
+
+The challenge is to draw a 2x2 cell maze using hires graphics.
+I know you can "just" make this in asm, and use memory under ROM, but the challenge is to make it work from Commodore 64 Basic v2, using Alvaro Alonso G graphics engine. (Which is located at $C000-C32E)
+This engine supports plot and line.
+This might seem trivial for the pros, but it was a cool learning experience for me.
+
+Problem: We need memory!
+
+In order to locate memory to store a 2-cell maze, you would need about 16000 bytes. 
+Since the HIRES screen is 320x200 pixels, and we need 2x2 pixels for each cell, this is 160x100=16000 bytes.
+Using a array of vars like:
+
+dim a(16000)
+
+This will fail with an out of memory error, since we allocate 16000 floating point numbers at the size of 5 byte each,
+5*16000=80000 bytes.
+
+Ok lets try with 16 bit signed integers using the % sign:
+
+dim a%(16000)
+
+This will consume 32000 bytes, from the end of our basic program going upwards in memory.
+
+Since the bitmap graphics data are located at address 24576, we are kinda screwed.
+
+Only 1 byte are needed for each cell, so we could go ahead and treat the 2 dimensional array like a chunk of data in sequencial order. All we gotta do, is calculate our way around the array.
+
+So instead we get this:
+p=start in memory
+x=current x pos
+y=current y pos
+px=max cells in x
+py=max cells in y
+
+So we can calculate the dataposition like its a 2d array:
+
+dataposition=p+(y*px)+x
+
+In this way the array of bytes needed are now 1 for each cell, and now its truely 16000 bytes. So we just saved 16000 bytes :D
+And we can navigate around the datachunk with X and Y.
+
+We can store this data almost anywhere in memory, just make sure we dont hit the bitmap graphics data at address 24576
+I located my data at 6144. Safe out of basic, basic vars and graphics memory.
+
+This means we have around 4kb for the basic program. Also remember that vars, dims are located after the basic program. If we mess around with string manipulation like right$, left$ or str$, basic will create extra strings on the string var stack which starts from almost the end of basic memory, working its way down to basic vars, eventually overwriting graphics memory.
+So if you see weird graphics or behavior, you have overwritten something. I learned this the hard way ;)
+
+Anyway, we got the 16000 bytes to store our data for the upcomming maze generation.
+
+This is how the bits are used for each cell
+bits 0..3 : doors: up,right,down,left. if set=closed door
+bit  4    : visit-bit. If set, the cell has not been visited
+
+So init the array data with value 31 closes all the doors, and have not been visited.
+
+But we still need to store a stack of x,y positions, in order to backtrack when there is a dead end.
+
+I thought a stack size with the cell size of 2, was around 10000 bytes atleast. Since most mazes uses about 2/3 of the cell count.
+So this would require another 10000 bytes for both x, and y =20000 bytes of stack data.
+Where am i gonna find that memory, unless i go ASM, and store stack data under ROM ?
+
+As you might have figured, we still got 3 bits in the cell data that are unused. So how about we just store the direction we went on the stack, but in the cell data bit5 and bit6. There can only be 4 possible directions so that is 2 bits.
+In order to backtrack, one just gotta read the 2 bits, and reverse the direction. To read the 2 bits:
+e=int((peek(p+stackpos)and96)/32)
+Mask out bit 5 and 6, and shift them down 5 bits to get a number from 0-3
+And in order to store the stack:
+poke p+stackpos,(peek(p+stackpos) and 31) or e*32
+This will mask out the first 5 bits, clear the last 3 bits, then OR the new data bit5 and bit6 into the byte.
+
+Bingo!
+
+Now the stack can be as large as the cell count. The stack cannot exceed the cellcount. So we are using the chunk of data in 2 different ways, just manipulating the bits at different locations.
+
+Here is the new layout of 1 cell byte:
+bits 0..3 : doors: up,right,down,left: if set=closed door
+bit  4    : visit-bit: If set, the cell has not been visited
+bits 5-6  : stack: 0..3: holds a value of the last move
+
+We even got a free bit to mess with!
+The visit bit can also be dropped, since one can just check if the cell bits 0..3=15 which means all doors are closed, which means the cell have not been visited. But i will keep that bit to lock various cells for a logo in the future.
+
+And there it is, the maze data cut down to a safe 16000 bytes. Any maze with a 2-cell pixel size or greater...bring 'em on!
+
+Now.. to make a 1 pixel sprite game to complete the maze. And if you hit the wall, its starting over haha... nah that will ruin our eyes.
+
+Anoter little bonus thing is that if we wish to save the maze, we can save only the first 4 bits of each cell. This means we can pack 2 cells in 1 byte. Saving the entire maze with "only" ~8kb
+
+The down side with this, is that it will take about 2 hours to render a 2x2 cell maze. But it works ;)
