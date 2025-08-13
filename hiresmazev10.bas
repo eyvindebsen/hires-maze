@@ -123,11 +123,11 @@
 99 rem main loop
 100 e=0:rem clear list of directions
 115 w=p+y*px+x:pokew,peek(w)and239:rem clear visit bit
-150 if y>0thenifpeek(p+(y-1)*px+x)and16thenn(e)=1:e=e+1:rem d$=d$+"u"
-160 if x<px-1thenifpeek(p+(y*px)+x+1)and16thenn(e)=2:e=e+1:rem d$=d$+"r"
-170 if y<pythenifpeek(p+(y+1)*px+x)and16thenn(e)=4:e=e+1:rem d$=d$+"d"
-180 if x>0thenifpeek(p+(y*px)+x-1)and16thenn(e)=8:e=e+1:rem d$=d$+"l"
-190 if e>0then200:rem can move
+150 ify>0thenifpeek(p+(y-1)*px+x)and16thenn(e)=1:e=e+1:rem d$=d$+"u"
+160 ifx<px-1thenifpeek(p+(y*px)+x+1)and16thenn(e)=2:e=e+1:rem d$=d$+"r"
+170 ify<pythenifpeek(p+(y+1)*px+x)and16thenn(e)=4:e=e+1:rem d$=d$+"d"
+180 ifx>0thenifpeek(p+(y*px)+x-1)and16thenn(e)=8:e=e+1:rem d$=d$+"l"
+190 ife>0then200:rem can move
 191 rem cant move, backtrack if pos
 192 ifs=0then400:rem maze done
 193 s=s-1:e=int((peek(p+s)and96)/32):rem reuse e var:print"backtrack"p+sc,f,peek(p+sc)
