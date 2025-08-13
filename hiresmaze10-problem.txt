@@ -3,7 +3,7 @@ Hires Maze v10
 The challenge is to draw a 2x2 cell maze using hires graphics.
 I know you can "just" make this in asm, and use memory under ROM, but the challenge
 is to make it work from Commodore 64 Basic v2,
-using Alvaro Alonso G graphics engine. (Which is located at $C000-C32E)
+using Alvaro Alonso G graphics engine. (Which is located at $C000-C364)
 This engine supports plot and line.
 This might seem trivial for the pros, but it was a cool learning experience for me.
 
